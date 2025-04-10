@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Aktsiad - Börsi Rakendus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 mb-3">Aktsiad</h1>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" id="searchInput" class="form-control" placeholder="Otsi aktsiaid..." style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                                <button class="btn btn-primary" type="button" id="searchButton">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <label for="sortSelect" class="me-2" style="color: #64ffda;">Sorteeri:</label>
+                            <select id="sortSelect" class="form-select custom-select d-inline-block w-auto" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                                <option value="name" style="background-color: #0d1117; color: #64ffda;">Nime järgi</option>
+                                <option value="price" style="background-color: #0d1117; color: #64ffda;">Hinna järgi</option>
+                                <option value="change" style="background-color: #0d1117; color: #64ffda;">Muutuse järgi</option>
+                                <option value="volume" style="background-color: #0d1117; color: #64ffda;">Käibe järgi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" id="stockList">
+                        {% for symbol, name in stocks.items() %}
+                        <div class="col-md-4 mb-4 stock-item" data-symbol="{{ symbol }}" data-name="{{ name }}">
+                            <div class="card stock-card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">{{ symbol }}</h5>
+                                        <span class="badge bg-primary">{{ name }}</span>
+                                    </div>
+                                    <div class="stock-data">
+                                        <div class="price mb-2">
+                                            <span class="text-muted">Hind:</span>
+                                            <span class="stock-price ms-2">Laadimine...</span>
+                                        </div>
+                                        <div class="change">
+                                            <span class="text-muted">Muutus:</span>
+                                            <span class="stock-change ms-2">Laadimine...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stockItems = document.querySelectorAll('.stock-item');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const sortButton = document.getElementById('sortButton');
+    const stockList = document.getElementById('stockList');
+    
+    let stockData = {};
+    let currentSort = 'name';
+    let currentSearchTerm = '';
+
+    // Load stock data
+    async function loadStockData() {
+        for (const item of stockItems) {
+            const symbol = item.dataset.symbol;
+            try {
+                const response = await fetch(`/stock/${symbol}`);
+                const data = await response.json();
+                if (data.stock) {
+                    stockData[symbol] = data.stock;
+                    updateStockDisplay(item, data.stock);
+                }
+            } catch (error) {
+                console.error(`Error loading data for ${symbol}:`, error);
+            }
+        }
+    }
+
+    // Update stock display
+    function updateStockDisplay(item, data) {
+        const priceElement = item.querySelector('.stock-price');
+        const changeElement = item.querySelector('.stock-change');
+        
+        priceElement.textContent = `$${data.price.toFixed(2)}`;
+        changeElement.textContent = `${data.change_percent.toFixed(2)}%`;
+        
+        if (data.change_percent > 0) {
+            changeElement.classList.add('price-up');
+            changeElement.classList.remove('price-down');
+        } else {
+            changeElement.classList.add('price-down');
+            changeElement.classList.remove('price-up');
+        }
+    }
+
+    // Sort stocks
+    function sortStocks() {
+        const items = Array.from(stockItems);
+        const sortBy = sortSelect.value;
+        
+        items.sort((a, b) => {
+            const symbolA = a.dataset.symbol;
+            const symbolB = b.dataset.symbol;
+            const dataA = stockData[symbolA];
+            const dataB = stockData[symbolB];
+            
+            if (!dataA || !dataB) return 0;
+            
+            switch(sortBy) {
+                case 'name':
+                    return symbolA.localeCompare(symbolB);
+                case 'price':
+                    return dataB.price - dataA.price;
+                case 'price-low':
+                    return dataA.price - dataB.price;
+                case 'change':
+                    return dataB.change_percent - dataA.change_percent;
+                default:
+                    return 0;
+            }
+        });
+        
+        items.forEach(item => stockList.appendChild(item));
+    }
+
+    // Search stocks
+    function searchStocks() {
+        const searchTerm = searchInput.value.toLowerCase();
+        currentSearchTerm = searchTerm;
+        
+        stockItems.forEach(item => {
+            const symbol = item.dataset.symbol.toLowerCase();
+            const name = item.dataset.name.toLowerCase();
+            const matches = symbol.includes(searchTerm) || name.includes(searchTerm);
+            item.style.display = matches ? 'block' : 'none';
+        });
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', searchStocks);
+    sortButton.addEventListener('click', sortStocks);
+    
+    // Initial load
+    loadStockData();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadStockData, 30000);
+});
+</script>
+{% endblock %} 

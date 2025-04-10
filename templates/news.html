@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Uudised - Börsi Rakendus{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Uudised</h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Aktsiad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('news') }}" class="list-group-item list-group-item-action {% if not request.view_args.get('symbol') %}active{% endif %}">
+                            Üldised uudised
+                        </a>
+                        {% for symbol, name in stocks.items() %}
+                        <a href="{{ url_for('stock_news', symbol=symbol) }}" 
+                           class="list-group-item list-group-item-action {% if request.view_args.get('symbol') == symbol %}active{% endif %}">
+                            {{ symbol }} - {{ name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            {% if news.error %}
+            <div class="alert alert-danger">
+                {{ news.error }}
+            </div>
+            {% else %}
+            <div class="row">
+                {% for article in news %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ article.title }}</h5>
+                            <p class="card-text text-muted">
+                                {{ article.publishedAt.split('T')[0] }}
+                            </p>
+                            <p class="card-text">{{ article.description }}</p>
+                            <a href="{{ article.url }}" target="_blank" class="btn btn-primary">Loe edasi</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

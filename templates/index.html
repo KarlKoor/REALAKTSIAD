@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Avaleht - Börsi Rakendus{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3">Tere tulemast Börsi Rakendusse</h1>
+            <p class="lead">Jälgige aktsiate hindu, uudiseid ja tehke võrdlusi</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Aktsiad</h3>
+                    <p class="card-text">Vaadake üle 50 populaarsema aktsia hinnad ja muutused reaalajas.</p>
+                    <a href="{{ url_for('stocks') }}" class="btn btn-primary">Vaata aktsiaid</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Uudised</h3>
+                    <p class="card-text">Jälgige börsi ja aktsiate uudiseid, et olla kursis kõige uuemate sündmustega.</p>
+                    <a href="{{ url_for('news') }}" class="btn btn-primary">Vaata uudiseid</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Võrdlus</h3>
+                    <p class="card-text">Võrdelge erinevaid aktsiaid, et teha paremaid investeerimisotsuseid.</p>
+                    <a href="{{ url_for('compare') }}" class="btn btn-primary">Võrdle aktsiaid</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Populaarsed aktsiad</h3>
+                    <div class="row">
+                        {% for symbol, name in stocks.items()|sort(attribute='0') %}
+                            {% if loop.index <= 6 %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ symbol }}</h5>
+                                        <p class="card-text">{{ name }}</p>
+                                        <a href="{{ url_for('stock_details', symbol=symbol) }}" class="btn btn-outline-primary">Vaata Detailsemalt</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

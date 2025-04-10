@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Börsid{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Börsid</h1>
+
+<div class="row">
+    {% for market_name, market_symbol in markets.items() %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ market_name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">{{ market_data[market_symbol]['price'] }}</h3>
+                    <span class="badge {% if market_data[market_symbol]['change'] > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ market_data[market_symbol]['change'] }}%
+                    </span>
+                </div>
+                <div class="market-details">
+                    <p class="mb-1">Muutus: {{ market_data[market_symbol]['change_amount'] }}</p>
+                    <p class="mb-1">Maht: {{ market_data[market_symbol]['volume'] }}</p>
+                    <p class="mb-0">Kõrgeim: {{ market_data[market_symbol]['high'] }} | Madalaim: {{ market_data[market_symbol]['low'] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

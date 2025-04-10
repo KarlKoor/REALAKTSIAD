@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Aktsiate Võrdlus - Börsi Rakendus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 mb-3">Aktsiate Võrdlus</h1>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="stock1" class="form-label" style="color: #64ffda;">Esimene Aktsia</label>
+                            <select id="stock1" class="form-select custom-select" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                                <option value="" style="background-color: #0d1117; color: #64ffda;">Vali aktsia...</option>
+                                {% for symbol, name in stocks.items() %}
+                                <option value="{{ symbol }}" style="background-color: #0d1117; color: #64ffda;">{{ symbol }} - {{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="stock2" class="form-label" style="color: #64ffda;">Teine Aktsia</label>
+                            <select id="stock2" class="form-select custom-select" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                                <option value="" style="background-color: #0d1117; color: #64ffda;">Vali aktsia...</option>
+                                {% for symbol, name in stocks.items() %}
+                                <option value="{{ symbol }}" style="background-color: #0d1117; color: #64ffda;">{{ symbol }} - {{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button id="compareButton" class="btn btn-primary">
+                        <i class="fas fa-balance-scale me-2"></i>Võrdle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="comparisonResults" class="row" style="display: none;">
+        <div class="col-md-6">
+            <div class="comparison-card" id="stock1Card">
+                <h3 class="card-title">Esimene Aktsia</h3>
+                <div class="stock-data">
+                    <div class="price">
+                        <span class="text-muted">Hind:</span>
+                        <span class="stock1-price">-</span>
+                    </div>
+                    <div class="change">
+                        <span class="text-muted">Muutus:</span>
+                        <span class="stock1-change">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="comparison-card" id="stock2Card">
+                <h3 class="card-title">Teine Aktsia</h3>
+                <div class="stock-data">
+                    <div class="price">
+                        <span class="text-muted">Hind:</span>
+                        <span class="stock2-price">-</span>
+                    </div>
+                    <div class="change">
+                        <span class="text-muted">Muutus:</span>
+                        <span class="stock2-change">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="comparison-chart">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stock1Select = document.getElementById('stock1');
+    const stock2Select = document.getElementById('stock2');
+    const compareButton = document.getElementById('compareButton');
+    const comparisonResults = document.getElementById('comparisonResults');
+    let priceChart = null;
+
+    async function loadStockData(symbol) {
+        try {
+            const response = await fetch(`/stock/${symbol}`);
+            const data = await response.json();
+            return data.stock;
+        } catch (error) {
+            console.error(`Error loading data for ${symbol}:`, error);
+            return null;
+        }
+    }
+
+    function updateStockCard(cardId, data) {
+        const card = document.getElementById(cardId);
+        const priceElement = card.querySelector('.price span:last-child');
+        const changeElement = card.querySelector('.change span:last-child');
+        
+        priceElement.textContent = `$${data.price.toFixed(2)}`;
+        changeElement.textContent = `${data.change_percent.toFixed(2)}%`;
+        
+        if (data.change_percent > 0) {
+            changeElement.classList.add('price-up');
+            changeElement.classList.remove('price-down');
+        } else {
+            changeElement.classList.add('price-down');
+            changeElement.classList.remove('price-up');
+        }
+    }
+
+    async function compareStocks() {
+        const stock1 = stock1Select.value;
+        const stock2 = stock2Select.value;
+        
+        if (!stock1 || !stock2) {
+            alert('Palun vali mõlemad aktsiad');
+            return;
+        }
+
+        const stock1Data = await loadStockData(stock1);
+        const stock2Data = await loadStockData(stock2);
+
+        if (stock1Data && stock2Data) {
+            updateStockCard('stock1Card', stock1Data);
+            updateStockCard('stock2Card', stock2Data);
+            
+            // Update chart
+            if (priceChart) {
+                priceChart.destroy();
+            }
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Hind'],
+                    datasets: [
+                        {
+                            label: stock1,
+                            data: [stock1Data.price],
+                            borderColor: '#00ff9d',
+                            backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: stock2,
+                            data: [stock2Data.price],
+                            borderColor: '#64ffda',
+                            backgroundColor: 'rgba(100, 255, 218, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'var(--text-color)'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: 'var(--text-color)'
+                            },
+                            grid: {
+                                color: 'rgba(100, 255, 218, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'var(--text-color)'
+                            },
+                            grid: {
+                                color: 'rgba(100, 255, 218, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            comparisonResults.style.display = 'flex';
+        }
+    }
+
+    compareButton.addEventListener('click', compareStocks);
+});
+</script>
+{% endblock %} 
