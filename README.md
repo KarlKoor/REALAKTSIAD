@@ -1,4 +1,4 @@
-REALAKTSIAD on Flaski-põhine veebirakendus, mis võimaldab kasutajatel:​
+Aktsiad on Flaski-põhine veebirakendus, mis võimaldab kasutajatel:​
 
 Vaadata reaalajas aktsiate hindu
 
