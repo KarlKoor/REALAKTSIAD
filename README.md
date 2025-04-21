@@ -8,12 +8,12 @@ Lugeda uudiseid konkreetsete aktsiate kohta
 
 Luua ja hallata oma aktsiaportfelli​
 
-Eeldused​
+Eeldused​: 
 Python 3.6 või uuem
 
 Pip (Python Package Installer)​
 
-Paigaldamine​
+Paigaldamine​: 
 Klooni see repositoorium:​
 
 bash
