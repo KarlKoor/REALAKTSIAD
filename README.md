@@ -1,4 +1,3 @@
-REALAKTSIAD​
 REALAKTSIAD on Flaski-põhine veebirakendus, mis võimaldab kasutajatel:​
 
 Vaadata reaalajas aktsiate hindu
@@ -50,10 +49,10 @@ templates/ – HTML-mallid
 
 static/ – Stiililehed ja muud staatilised failid​
 
-Märkused​
+Märkused:​
 Rakendus on mõeldud kasutamiseks lokaalses võrgus.
 
 Veendu, et kõik sõltuvused on korrektselt paigaldatud.​
 
-Autor​
+Autor​:
 Karl Koor
