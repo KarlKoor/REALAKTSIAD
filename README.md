@@ -16,27 +16,23 @@ Pip (Python Package Installer)​
 Paigaldamine​: 
 Klooni see repositoorium:​
 
-bash
 Kopeeri
 Redigeeri
 git clone https://github.com/KarlKoor/REALAKTSIAD.git
 cd REALAKTSIAD
 Paigalda vajalikud sõltuvused:​
 
-bash
 Kopeeri
 Redigeeri
 pip install -r requirements.txt
 Kasutamine​
 Käivita rakendus:​
 
-bash
 Kopeeri
 Redigeeri
 python app.py
 Seejärel ava veebibrauseris aadress:​
 
-arduino
 Kopeeri
 Redigeeri
 http://localhost:5000
