@@ -149,12 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Event listeners
-    searchInput.addEventListener('input', searchStocks);
-    sortButton.addEventListener('click', sortStocks);
-    
     // Initial load
     loadStockData();
+
+    // Event listeners
+    searchInput.addEventListener('input', searchStocks);
+    //sortButton.addEventListener('click', sortStocks);
     
     // Auto-refresh every 30 seconds
     setInterval(loadStockData, 30000);

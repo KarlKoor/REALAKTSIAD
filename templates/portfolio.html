@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Minu Portfell - Börsi Rakendus{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 mb-3">Minu Portfell</h1>
+            
+            <!-- Portfelli ülevaade -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5 class="text-muted">Portfelli Väärtus</h5>
+                            <h3 class="portfolio-value" style="color: #64ffda;">€0.00</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="text-muted">Tänane Muutus</h5>
+                            <h3 class="daily-change" style="color: #64ffda;">€0.00 (0.00%)</h3>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="text-muted">Kogukasum/-kahjum</h5>
+                            <h3 class="total-profit" style="color: #64ffda;">€0.00 (0.00%)</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aktsia lisamise vorm -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3" style="color: #64ffda;">Lisa Aktsia</h4>
+                    <form id="addStockForm">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="stockSymbol" class="form-label" style="color: #64ffda;">Aktsia</label>
+                                <select id="stockSymbol" class="form-select" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                                    <option value="" style="background-color: #0d1117; color: #64ffda;">Vali aktsia...</option>
+                                    {% for symbol, name in stocks.items() %}
+                                    <option value="{{ symbol }}" style="background-color: #0d1117; color: #64ffda;">{{ symbol }} - {{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="quantity" class="form-label" style="color: #64ffda;">Kogus</label>
+                                <input type="number" id="quantity" class="form-control" min="1" step="1" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="buyPrice" class="form-label" style="color: #64ffda;">Ostuhind</label>
+                                <input type="number" id="buyPrice" class="form-control" min="0.01" step="0.01" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="buyDate" class="form-label" style="color: #64ffda;">Ostukuupäev</label>
+                                <input type="date" id="buyDate" class="form-control" style="background-color: #0d1117; color: #64ffda; border: 1px solid #64ffda;">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Lisa Portfelli
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Portfelli sisu -->
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mb-3" style="color: #64ffda;">Portfelli Sisu</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="color: #64ffda;">Aktsia</th>
+                                    <th style="color: #64ffda;">Kogus</th>
+                                    <th style="color: #64ffda;">Ostuhind</th>
+                                    <th style="color: #64ffda;">Praegune Hind</th>
+                                    <th style="color: #64ffda;">Koguväärtus</th>
+                                    <th style="color: #64ffda;">Kasum/Kahjum</th>
+                                    <th style="color: #64ffda;">Tegevused</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioTable" style="color: #64ffda;">
+                                <!-- JavaScript täidab selle tabeli -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addStockForm = document.getElementById('addStockForm');
+    const portfolioTable = document.getElementById('portfolioTable');
+    
+    // Laadime salvestatud portfelli
+    loadPortfolio();
+    
+    addStockForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const stock = {
+            symbol: document.getElementById('stockSymbol').value,
+            quantity: parseInt(document.getElementById('quantity').value),
+            buyPrice: parseFloat(document.getElementById('buyPrice').value),
+            buyDate: document.getElementById('buyDate').value
+        };
+        
+        if (!stock.symbol || !stock.quantity || !stock.buyPrice || !stock.buyDate) {
+            alert('Palun täitke kõik väljad!');
+            return;
+        }
+        
+        addToPortfolio(stock);
+        addStockForm.reset();
+    });
+    
+    function addToPortfolio(stock) {
+        // Salvestame portfelli
+        let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+        portfolio.push(stock);
+        localStorage.setItem('portfolio', JSON.stringify(portfolio));
+        
+        // Uuendame vaadet
+        loadPortfolio();
+    }
+    
+    function loadPortfolio() {
+        const portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+        portfolioTable.innerHTML = '';
+        
+        portfolio.forEach((stock, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="color: #64ffda;">${stock.symbol}</td>
+                <td style="color: #64ffda;">${stock.quantity}</td>
+                <td style="color: #64ffda;">€${stock.buyPrice.toFixed(2)}</td>
+                <td style="color: #64ffda;" class="current-price">Laadimine...</td>
+                <td style="color: #64ffda;" class="total-value">Laadimine...</td>
+                <td style="color: #64ffda;" class="profit-loss">Laadimine...</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeStock(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            portfolioTable.appendChild(row);
+            
+            // Laadime praeguse hinna
+            fetchCurrentPrice(stock.symbol, index);
+        });
+        
+        updatePortfolioSummary();
+    }
+    
+    async function fetchCurrentPrice(symbol, index) {
+        try {
+            const response = await fetch(`/stock/${symbol}`);
+            const data = await response.json();
+            const currentPrice = data.stock.price;
+            
+            const row = portfolioTable.children[index];
+            const stock = JSON.parse(localStorage.getItem('portfolio'))[index];
+            
+            const totalValue = currentPrice * stock.quantity;
+            const profitLoss = totalValue - (stock.buyPrice * stock.quantity);
+            const profitLossPercent = ((currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
+            
+            row.children[3].textContent = `€${currentPrice.toFixed(2)}`;
+            row.children[4].textContent = `€${totalValue.toFixed(2)}`;
+            row.children[5].textContent = `€${profitLoss.toFixed(2)} (${profitLossPercent.toFixed(2)}%)`;
+            
+            if (profitLoss > 0) {
+                row.children[5].style.color = '#00ff9d';
+            } else if (profitLoss < 0) {
+                row.children[5].style.color = '#ff4444';
+            }
+            
+            updatePortfolioSummary();
+        } catch (error) {
+            console.error('Error fetching price:', error);
+        }
+    }
+    
+    function updatePortfolioSummary() {
+        const portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+        let totalValue = 0;
+        let totalCost = 0;
+        
+        portfolio.forEach(stock => {
+            const currentPrice = parseFloat(portfolioTable.querySelector(`tr:nth-child(${portfolio.indexOf(stock) + 1}) td:nth-child(4)`).textContent.replace('€', ''));
+            if (!isNaN(currentPrice)) {
+                totalValue += currentPrice * stock.quantity;
+                totalCost += stock.buyPrice * stock.quantity;
+            }
+        });
+        
+        const totalProfit = totalValue - totalCost;
+        const totalProfitPercent = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+        
+        document.querySelector('.portfolio-value').textContent = `€${totalValue.toFixed(2)}`;
+        document.querySelector('.total-profit').textContent = `€${totalProfit.toFixed(2)} (${totalProfitPercent.toFixed(2)}%)`;
+        
+        if (totalProfit > 0) {
+            document.querySelector('.total-profit').style.color = '#00ff9d';
+        } else if (totalProfit < 0) {
+            document.querySelector('.total-profit').style.color = '#ff4444';
+        }
+    }
+});
+
+function removeStock(index) {
+    if (confirm('Kas olete kindel, et soovite selle aktsia eemaldada?')) {
+        let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+        portfolio.splice(index, 1);
+        localStorage.setItem('portfolio', JSON.stringify(portfolio));
+        location.reload();
+    }
+}
+</script>
+{% endblock %} 

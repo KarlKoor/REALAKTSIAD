@@ -89,14 +89,18 @@ POPULAR_STOCKS = {
 def get_stock_data(symbol):
     try:
         stock = yf.Ticker(symbol)
-        hist = stock.history(period="1d")
+        # Kasutame period='1d' ja interval='1m' viimase hinna saamiseks
+        hist = stock.history(period='1d', interval='1m')
         if hist.empty:
             return {'error': 'No data found for this symbol'}
         
-        current_price = hist['Close'].iloc[-1]
-        prev_close = hist['Open'].iloc[0]
+        # Võtame viimase hinna
+        current_price = hist['Close'].iloc[-1] if len(hist) > 0 else 0
+        # Võtame päeva alguse hinna
+        prev_close = hist['Open'].iloc[0] if len(hist) > 0 else current_price
+        
         change = current_price - prev_close
-        change_percent = (change / prev_close) * 100
+        change_percent = (change / prev_close) * 100 if prev_close != 0 else 0
         
         return {
             'symbol': symbol,
@@ -105,7 +109,13 @@ def get_stock_data(symbol):
             'change_percent': round(change_percent, 2)
         }
     except Exception as e:
-        return {'error': str(e)}
+        print(f"Error fetching data for {symbol}: {str(e)}")
+        return {
+            'symbol': symbol,
+            'price': 0,
+            'change': 0,
+            'change_percent': 0
+        }
 
 def get_news(company_name):
     try:
@@ -175,19 +185,14 @@ def stock_news(symbol):
 def compare():
     return render_template('compare.html', stocks=POPULAR_STOCKS)
 
+@app.route('/portfolio')
+def portfolio():
+    return render_template('portfolio.html', stocks=POPULAR_STOCKS)
+
 @app.route('/stock/<symbol>')
 def stock_details(symbol):
     stock_data = get_stock_data(symbol)
-    if 'error' in stock_data:
-        return jsonify(stock_data), 404
-    
-    company_name = POPULAR_STOCKS.get(symbol.upper(), symbol.upper())
-    news_data = get_news(company_name)
-    
-    return jsonify({
-        'stock': stock_data,
-        'news': news_data
-    })
+    return jsonify({'stock': stock_data})
 
 @app.route('/search')
 def search():
@@ -201,6 +206,19 @@ def search():
     }
     
     return jsonify(matching_stocks)
+
+# Uus endpoint mitme aktsia andmete korraga laadimiseks
+@app.route('/stocks/batch', methods=['POST'])
+def batch_stock_data():
+    symbols = request.json.get('symbols', [])
+    if not symbols:
+        return jsonify({'error': 'No symbols provided'}), 400
+    
+    results = {}
+    for symbol in symbols:
+        results[symbol] = get_stock_data(symbol)
+    
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
